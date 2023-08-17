@@ -4,6 +4,7 @@ import sys
 import requests
 from typing import List
 from bs4 import BeautifulSoup
+from logger import Logger
 
 BASE_URL = "https://www.realmofdarkness.net"
 TARGET_URL = "https://www.realmofdarkness.net/sb/soundboards/"
@@ -33,8 +34,6 @@ UNWANTED_URLS = [
     "https://www.realmofdarkness.net/sb/privacy",
 ]
 
-# TODO: improve UI output of console
-# TODO: log functionality
 # TODO: command line functionality
 # TODO: format file properly
 # TODO: try/catch to not error out?
@@ -112,7 +111,7 @@ def get_all_soundboard_file_names(sounds_js_url: str) -> List[str]:
     return sounds
 
 
-def download_and_save_mp3s(dir: str, audio_url: str, file_names: List[str]) -> None:
+def download_and_save_mp3s(dir: str, audio_url: str, file_names: List[str], logger: Logger) -> None:
     """
     Download all soundboard files `file_names` from endpoint `audio_url` and save them in a folder named `dir`.
 
@@ -134,7 +133,7 @@ def download_and_save_mp3s(dir: str, audio_url: str, file_names: List[str]) -> N
                 'beer', 'bestburger', 'betsy', 'betsyhs-2', 'betsyhs', 'bill', 'bobby-2', ...
             ])
     """
-    print("Downloading to:", os.path.join(os.getcwd(), f"sounds/{dir}/"))
+    logger.log("Downloading to:", os.path.join(os.getcwd(), f"sounds/{dir}/"))
     # fancy downloading bar
     sys.stdout.write(
         f"\r[{100*' '}] {0:0>{len(str(len(file_names)))}}/{len(file_names):0>{len(str(len(file_names)))}}"
@@ -146,16 +145,17 @@ def download_and_save_mp3s(dir: str, audio_url: str, file_names: List[str]) -> N
         sys.stdout.write(
             f"\r[{int_percentage*'='}{(100-int_percentage)*' '}] {(index + 1):0>{len(str(len(file_names)))}}/{len(file_names):0>{len(str(len(file_names)))}}"
         )
+        logger.log(f"\r[{int_percentage*'='}{(100-int_percentage)*' '}] {(index + 1):0>{len(str(len(file_names)))}}/{len(file_names):0>{len(str(len(file_names)))}}", write_only = True)
 
         req = requests.get(BASE_URL + (audio_url % sound_file))
         with open(
             os.path.join(os.getcwd(), f"sounds/{dir}/{sanitize_file_name(sound_file)}.mp3"), "wb"
         ) as f:
             f.write(req.content)
-    print("")
+    logger.log("")
 
 
-def download_all_soundboard_files(dir: str, audio_url: str, file_names: List[str]) -> None:
+def download_all_soundboard_files(dir: str, audio_url: str, file_names: List[str], logger: Logger) -> None:
     """
     Download all soundboard files. Check /sounds directory for matching soundboard files prior to attempting download.
     Removing any matching files from `file_names` if found
@@ -164,6 +164,7 @@ def download_all_soundboard_files(dir: str, audio_url: str, file_names: List[str
         dir (str): Name for folder in which all soundboard files will be downloaded to
         audio_url (str): Target endpoint for current soundboard. MUST contain a string formatter '%s' to function correctly
         file_names (List[str]): Soundboard file names to download from `audio_url` endpoint
+        logger (Logger): logger class to keep log & output
 
     Returns:
         None
@@ -192,20 +193,21 @@ def download_all_soundboard_files(dir: str, audio_url: str, file_names: List[str
                 skipped_files += 1
                 file_names.pop(x)
         if skipped_files > 0:
-            print(f"Skipped {skipped_files} Sounds : Files already exist")
+            logger.log(f"Skipped {skipped_files} Sounds : Files already exist")
     # dont proceed if we dont have any files to download left
     if len(file_names) == 0:
         return
 
-    download_and_save_mp3s(dir, audio_url, file_names)
+    download_and_save_mp3s(dir, audio_url, file_names, logger)
     
 
-def scrape_soundboard(url: str) -> None:
+def scrape_soundboard(url: str, logger: Logger) -> None:
     """
     Find and download all soundboard files for target soundboard `url`
 
     Parameters:
         url (str): URL for target soundboard
+        logger (Logger): logger class to keep log & output
 
     Returns:
         None
@@ -232,11 +234,12 @@ def scrape_soundboard(url: str) -> None:
     )
 
     sounds = get_all_soundboard_file_names(sounds_js_url)
-    print(f"{'=' * 85}\nFound {len(sounds)} sound files for {url}")
-    download_all_soundboard_files(soundboard_name, audio_file_url, sounds)
+    logger.log(f"{'=' * 85}")
+    logger.log(f"Found {len(sounds)} sound files for {url}")
+    download_all_soundboard_files(soundboard_name, audio_file_url, sounds, logger)
 
 
-def get_all_categories(target_url: str, soundboard_list: List[str], visited_list: List[str]) -> None:
+def get_all_categories(target_url: str, soundboard_list: List[str], visited_list: List[str], logger: Logger) -> None:
     """
     Recursive function to go through soundboard categories on realmofdarkness website to discover all
     soundboards in order to download them.
@@ -245,6 +248,7 @@ def get_all_categories(target_url: str, soundboard_list: List[str], visited_list
         target_url (str): Target url to check
         soundboard_list (List[str]): List of soundboards that have been scraped
         visited_list (List[str]): List of pages that this function has already visited as to not double dip
+        logger (Logger): logger class to keep log & output
 
     Returns:
         None
@@ -256,7 +260,7 @@ def get_all_categories(target_url: str, soundboard_list: List[str], visited_list
     soup = BeautifulSoup(html.content, "html.parser")
     found_a_tags = soup.find_all("a")
 
-    print(f"SCRAPING {target_url} | Current Found Soundboards: {len(soundboard_list)}")
+    logger.log(f"SCRAPING {target_url} | Current Found Soundboards: {len(soundboard_list)}")
     # remove any <a> tag elements for un-necessary pages that were picked up,; such as; contact, privacy, home
     for x in range(len(found_a_tags) - 1, -1, -1):
         for unwanted_url in UNWANTED_URLS:
@@ -282,15 +286,18 @@ def get_all_categories(target_url: str, soundboard_list: List[str], visited_list
         if "Soundboards" in get_website_title(soup.find("title").text):
             visited_list.append(soundboard_url)
             # for match in matches:
-            get_all_categories(soundboard_url, soundboard_list, visited_list)
+            get_all_categories(soundboard_url, soundboard_list, visited_list, logger)
         elif "Soundboard" in get_website_title(soup.find("title").text):
             soundboard_list.append(soundboard_url)
-            scrape_soundboard(soundboard_url)
+            scrape_soundboard(soundboard_url, logger)
 
 
-def scrape_soundboard_website() -> None:
+def scrape_soundboard_website(logger: Logger) -> None:
     """
     Start scraping realmofdarkness soundboards and download them
+
+    Parameters:
+        logger (Logger): logger class to keep log & output
 
     Returns:
         None
@@ -299,10 +306,18 @@ def scrape_soundboard_website() -> None:
         scrape_soundboard_website()
     """
     soundboard_list, category_list = [], []
-    get_all_categories(TARGET_URL, soundboard_list, category_list)
+    get_all_categories(TARGET_URL, soundboard_list, category_list, logger)
 
-if __name__ == "__main__":
-    scrape_soundboard_website()
+
+def main():
+    """
+    
+    """
+    logger = Logger()
+    scrape_soundboard_website(logger)
 
     # scrape single soundboard
     #scrape_soundboard("https://www.realmofdarkness.net/sb/koth-hank/")
+
+if __name__ == "__main__":
+    main()

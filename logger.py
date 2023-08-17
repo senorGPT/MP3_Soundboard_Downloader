@@ -15,7 +15,7 @@ class Logger:
         """
         self.file.close()
 
-    def log(self, msg: str, type: MessageType) -> None:
+    def log(self, msg: str, type: MessageType = "INFO", write_only = False) -> None:
         """
 
 
@@ -29,8 +29,9 @@ class Logger:
         Example:
             
         """
-        msg = f"[]"
-        print()
-        self.file.write()
+        msg = f"[{str(MessageType(type.upper())).replace('MessageType.', '')}] - {msg}"
 
+        if not write_only:
+            print(msg)
 
+        self.file.write(msg + '\n')
