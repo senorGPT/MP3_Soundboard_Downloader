@@ -233,7 +233,7 @@ def get_all_categories(target_url: str, soundboard_list: List[str], visited_list
         None
 
     Example:
-
+        get_all_categories('https://www.realmofdarkness.net/sb/soundboards/', [], [])
     """
     html = requests.get(target_url)
     soup = BeautifulSoup(html.content, "html.parser")
@@ -282,13 +282,11 @@ def scrape_soundboard_website() -> None:
         scrape_soundboard_website()
     """
     soundboard_list, category_list = [], []
-    # TODO: remove me
-    print(f"get_all_categories({TARGET_URL}, {soundboard_list}, {category_list})")
     get_all_categories(TARGET_URL, soundboard_list, category_list)
 
 
 if __name__ == "__main__":
-    # scrape_soundboard_website()
+    scrape_soundboard_website()
 
     # scrape single soundboard
-    scrape_soundboard("https://www.realmofdarkness.net/sb/koth-hank/")
+    #scrape_soundboard("https://www.realmofdarkness.net/sb/koth-hank/")
