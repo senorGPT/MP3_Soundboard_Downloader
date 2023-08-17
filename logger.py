@@ -18,6 +18,7 @@ class Logger:
     def log(self, msg: str, type: MessageType) -> None:
         """
 
+
         Parameters:
             msg (str): 
             type (MessageType): 
@@ -28,5 +29,8 @@ class Logger:
         Example:
             
         """
+        msg = f"[]"
         print()
         self.file.write()
+
+

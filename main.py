@@ -33,17 +33,35 @@ UNWANTED_URLS = [
     "https://www.realmofdarkness.net/sb/privacy",
 ]
 
-# TODO: document code
 # TODO: improve UI output of console
-# TODO: document code examples
-# TODO: rename file to main.py
 # TODO: log functionality
 # TODO: command line functionality
 # TODO: format file properly
-# TODO: sanitize names properly
 # TODO: try/catch to not error out?
 
 MATCHING_SCRIPT_REGEX = r'<script src="\/scripts\/sb\/.*?\/sounds\.js">'
+
+
+def sanitize_file_name(file_name: str) -> None:
+    """
+    Sanitize `file_name` to comply by Windows Explorer naming conventions
+
+    Parameters:
+        file_name (str): File name to sanitize into a Windows Explorer appropriate name
+
+    Return:
+        str: Sanitized version for Windows Explorer of `file_name`
+
+    Example:
+        sanitize_file_name('')
+    """
+    CHARS_TO_REMOVE = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
+    sanitized_name = file_name
+
+    for character in CHARS_TO_REMOVE:
+        sanitized_name.replace(character, '')
+    
+    return sanitized_name
 
 
 def get_website_title(title_text: str) -> str:
@@ -131,7 +149,7 @@ def download_and_save_mp3s(dir: str, audio_url: str, file_names: List[str]) -> N
 
         req = requests.get(BASE_URL + (audio_url % sound_file))
         with open(
-            os.path.join(os.getcwd(), f"sounds/{dir}/{sound_file}.mp3"), "wb"
+            os.path.join(os.getcwd(), f"sounds/{dir}/{sanitize_file_name(sound_file)}.mp3"), "wb"
         ) as f:
             f.write(req.content)
     print("")
@@ -214,11 +232,10 @@ def scrape_soundboard(url: str) -> None:
     )
 
     sounds = get_all_soundboard_file_names(sounds_js_url)
-    print(f"\n\nFound {len(sounds)} sound files for {url}")
+    print(f"{'=' * 85}\nFound {len(sounds)} sound files for {url}")
     download_all_soundboard_files(soundboard_name, audio_file_url, sounds)
 
 
-# TODO: possibly break this function up into smaller functions
 def get_all_categories(target_url: str, soundboard_list: List[str], visited_list: List[str]) -> None:
     """
     Recursive function to go through soundboard categories on realmofdarkness website to discover all
@@ -283,7 +300,6 @@ def scrape_soundboard_website() -> None:
     """
     soundboard_list, category_list = [], []
     get_all_categories(TARGET_URL, soundboard_list, category_list)
-
 
 if __name__ == "__main__":
     scrape_soundboard_website()
