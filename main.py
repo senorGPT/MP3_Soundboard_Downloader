@@ -58,7 +58,7 @@ def sanitize_file_name(file_name: str) -> None:
     sanitized_name = file_name
 
     for character in CHARS_TO_REMOVE:
-        sanitized_name.replace(character, '')
+        sanitized_name = sanitized_name.replace(character, '')
     
     return sanitized_name
 
@@ -260,6 +260,7 @@ def get_all_categories(target_url: str, soundboard_list: List[str], visited_list
     soup = BeautifulSoup(html.content, "html.parser")
     found_a_tags = soup.find_all("a")
 
+    logger.log(f"{'-' * 85}")
     logger.log(f"SCRAPING {target_url} | Current Found Soundboards: {len(soundboard_list)}")
     # remove any <a> tag elements for un-necessary pages that were picked up,; such as; contact, privacy, home
     for x in range(len(found_a_tags) - 1, -1, -1):
