@@ -133,7 +133,7 @@ def download_and_save_mp3s(dir: str, audio_url: str, file_names: List[str], logg
                 'beer', 'bestburger', 'betsy', 'betsyhs-2', 'betsyhs', 'bill', 'bobby-2', ...
             ])
     """
-    logger.log("Downloading to:", os.path.join(os.getcwd(), f"sounds/{dir}/"))
+    logger.log(f"Downloading to: {os.path.join(os.getcwd(), 'sounds/' + dir + '/')}")
     # fancy downloading bar
     sys.stdout.write(
         f"\r[{100*' '}] {0:0>{len(str(len(file_names)))}}/{len(file_names):0>{len(str(len(file_names)))}}"
@@ -179,16 +179,17 @@ def download_all_soundboard_files(dir: str, audio_url: str, file_names: List[str
                 'beer', 'bestburger', 'betsy', 'betsyhs-2', 'betsyhs', 'bill', 'bobby-2', ...
             ])
     """
+    sanitized_dir = sanitize_file_name(dir)
     # keep track of the number of songs skipped
     skipped_files = 0
     # make the directory if it doesnt exist
-    if not os.path.isdir(os.path.join(os.getcwd(), f"sounds/{dir}/")):
-        os.makedirs(os.path.join(os.getcwd(), f"sounds/{dir}/"))
+    if not os.path.isdir(os.path.join(os.getcwd(), f"sounds/{sanitized_dir}/")):
+        os.makedirs(os.path.join(os.getcwd(), f"sounds/{sanitized_dir}/"))
     else:
         # skip and remove any files that already exist
         for x in range(len(file_names) - 1, -1, -1):
             if os.path.isfile(
-                os.path.join(os.getcwd(), f"sounds/{dir}/{file_names[x]}.mp3")
+                os.path.join(os.getcwd(), f"sounds/{sanitized_dir}/{file_names[x]}.mp3")
             ):
                 skipped_files += 1
                 file_names.pop(x)
@@ -198,7 +199,7 @@ def download_all_soundboard_files(dir: str, audio_url: str, file_names: List[str
     if len(file_names) == 0:
         return
 
-    download_and_save_mp3s(dir, audio_url, file_names, logger)
+    download_and_save_mp3s(sanitized_dir, audio_url, file_names, logger)
     
 
 def scrape_soundboard(url: str, logger: Logger) -> None:
@@ -318,7 +319,7 @@ def main():
     scrape_soundboard_website(logger)
 
     # scrape single soundboard
-    #scrape_soundboard("https://www.realmofdarkness.net/sb/koth-hank/")
+    #scrape_soundboard("https://www.realmofdarkness.net/sb/koth-hank/", logger)
 
 if __name__ == "__main__":
     main()
